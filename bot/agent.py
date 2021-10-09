@@ -23,21 +23,85 @@ def agent(observation, configuration):
     # we iterate over all our units and do something with them
     for unit in player.units:
         if unit.is_worker() and unit.can_act():
-            if unit.get_cargo_space_left() > 0:
-                closest_resource_tile = get_closest_resource(player, resource_tiles, unit)
-                if closest_resource_tile is not None:
-                    actions.append(unit.move(unit.pos.direction_to(closest_resource_tile.pos)))
+            expandable = can_build_city(unit)
+            if expandable is not None:
+                actions = build_city(unit, expandable, actions)
             else:
-                if len(player.cities) > 0:
-                    closest_city_tile = get_closest_city(player, unit)
-                    if closest_city_tile is not None:
-                        move_dir = unit.pos.direction_to(closest_city_tile.pos)
-                        actions.append(unit.move(move_dir))
+                if unit.get_cargo_space_left() > 0:
+                    closest_resource_tile = get_closest_resource(player, resource_tiles, unit)
+                    if closest_resource_tile is not None:
+                        actions.append(unit.move(unit.pos.direction_to(closest_resource_tile.pos)))
+                else:
+                    if len(player.cities) > 0:
+                        closest_city_tile = get_closest_city(player, unit)
+                        if closest_city_tile is not None:
+                            move_dir = unit.pos.direction_to(closest_city_tile.pos)
+                            actions.append(unit.move(move_dir))
+
+    # build new tile
+
 
     # you can add debug annotations using the functions in the annotate object
     # actions.append(annotate.circle(0, 0))
     
     return actions
+
+
+def is_valid_cell_position(x, y):
+    if 0 <= x < game_state.map.width and 0 <= y < game_state.map.height:
+        return True
+    return False
+
+
+def get_adjacent_cells(city_tile):
+    result = []
+    xs = [city_tile.pos.x - 1, city_tile.pos.x + 1]
+    ys = [city_tile.pos.y - 1, city_tile.pos.y + 1]
+    for x in xs:
+        for y in ys:
+            if is_valid_cell_position(x, y):
+                result.append(game_state.map.get_cell(x,y))
+    return result
+
+
+def get_optimal_adjacent_cell(unit, city):
+    optimal_cell = None
+    distance = math.inf
+    for city_tile in city.citytiles:
+        adjacent_cells = get_adjacent_cells(city_tile)
+        for cell in adjacent_cells:
+            dis = cell.pos.distance_to(unit.pos)
+            if dis == 0:
+                return cell
+            if dis < distance:
+                optimal_cell = cell
+                distance = dis
+    return optimal_cell
+
+
+
+def build_city(unit, city, action_list):
+    destination = get_optimal_adjacent_cell(unit, city)
+    # find adjacnet unoccupied squares of the city
+    # find closest to unit
+    # move towards
+    # if in that square add action
+
+
+def get_city_to_expand(player, unit):
+    for city in player.cities.values():
+        if city.fuel > city.light_upkeep()*10:
+            return city
+    return None
+
+
+def can_build_city(unit):
+    expansion = get_city_to_expand(unit)
+    if unit.get_cargo_space_left() == 0 and expansion is not None:   # Potentially optimise so we get rid of least amount of fuel
+        return expansion
+    return None
+
+
 
 
 def get_closest_city(player, unit):
