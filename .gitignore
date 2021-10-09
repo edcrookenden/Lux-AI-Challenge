@@ -1,5 +1,8 @@
+# Ours
 /errorlogs
 /replays
+bot/agent.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
