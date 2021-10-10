@@ -41,7 +41,7 @@ def agent(observation, configuration):
         if unit.is_worker() and unit.can_act():
             expandable = can_build_city(player, unit)
             if expandable is not None:
-                actions = build_city(unit, expandable, actions)
+                actions = build_city(game_state, unit, expandable, actions)
             else:
                 if unit.get_cargo_space_left() > 0:
                     closest_resource_tile = get_closest_resource(player, resource_tiles, unit)
@@ -62,12 +62,14 @@ def agent(observation, configuration):
     
     return actions
 
+
 def occupied_cells():
     pass
     # want this for collisions
     # Add opponent cities
     # add where are units are moving too
     # Can collide in out own city so these are an exception
+
 
 def is_valid_cell_position(x, y):
     if 0 <= x < game_state.map.width and 0 <= y < game_state.map.height:
@@ -104,10 +106,10 @@ def get_optimal_adjacent_cell(unit, city):
     return optimal_cell
 
 
-def calc_next_cell(source, direction):
+def calc_next_cell(state, source, direction):
     x = source.pos.x
     y = source.pos.y
-    if direction == DIRECTIONS.CENTRE:
+    if direction == DIRECTIONS.CENTER:
         return source
     if direction == DIRECTIONS.NORTH:
         y = y + 1
@@ -117,12 +119,12 @@ def calc_next_cell(source, direction):
         x = x - 1
     elif direction == DIRECTIONS.EAST:
         x = x + 1
-    return game_state.map.get_cell(x, y)
+    return state.map.get_cell(x, y)
 
 
 def rotate_90_degrees(direction):
-    if direction == DIRECTIONS.CENTRE:
-        return DIRECTIONS.CENTRE
+    if direction == DIRECTIONS.CENTER:
+        return DIRECTIONS.CENTER
     if direction == DIRECTIONS.NORTH:
         return DIRECTIONS.WEST
     if direction == DIRECTIONS.SOUTH:
@@ -133,19 +135,18 @@ def rotate_90_degrees(direction):
         return DIRECTIONS.NORTH
 
 
-def build_city(unit, city, action_list):
+def build_city(state, unit, city, action_list):
     destination = get_optimal_adjacent_cell(unit, city)
     if destination.pos.equals(unit.pos):
         action_list.append(unit.build_city())
         return action_list
     direction = unit.pos.direction_to(destination.pos)
-    next_cell = calc_next_cell(unit, direction)
+    next_cell = calc_next_cell(state, unit, direction)
     while next_cell.citytile is not None:
         direction = rotate_90_degrees(direction)
-        next_cell = calc_next_cell(unit, direction) # Edge case where it is trapped not dealt with
+        next_cell = calc_next_cell(state, unit, direction) # Edge case where it is trapped not dealt with
     action_list.append(unit.move(unit.pos.direction_to(next_cell.pos)))
     return action_list
-
 
 
 def get_city_to_expand(player, unit):
