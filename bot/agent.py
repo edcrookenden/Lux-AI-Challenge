@@ -20,10 +20,26 @@ def agent(observation, configuration):
 
     resource_tiles = find_resource_tiles(game_state, height, width)
 
+    max_units = sum([len(x.citytiles) for x in player.cities.values()])
+    num_units = len(player.units)
+
+    # City actions
+    for cities in player.cities.values():
+        for city_tile in cities.citytiles:
+            max_workers = (num_units >= max_units)
+            if city_tile.can_act():
+                if max_workers:
+                    action = city_tile.research()
+                    actions.append(action)
+                else:
+                    action = city_tile.build_worker()
+                    actions.append(action)
+                    num_units += 1
+
     # we iterate over all our units and do something with them
     for unit in player.units:
         if unit.is_worker() and unit.can_act():
-            expandable = can_build_city(unit)
+            expandable = can_build_city(player, unit)
             if expandable is not None:
                 actions = build_city(unit, expandable, actions)
             else:
@@ -46,6 +62,12 @@ def agent(observation, configuration):
     
     return actions
 
+def occupied_cells():
+    pass
+    # want this for collisions
+    # Add opponent cities
+    # add where are units are moving too
+    # Can collide in out own city so these are an exception
 
 def is_valid_cell_position(x, y):
     if 0 <= x < game_state.map.width and 0 <= y < game_state.map.height:
@@ -55,12 +77,14 @@ def is_valid_cell_position(x, y):
 
 def get_adjacent_cells(city_tile):
     result = []
-    xs = [city_tile.pos.x - 1, city_tile.pos.x + 1]
-    ys = [city_tile.pos.y - 1, city_tile.pos.y + 1]
+    xs = [city_tile.pos.x - 1, city_tile.pos.x + 1, city_tile.pos.x]
+    ys = [city_tile.pos.y - 1, city_tile.pos.y + 1, city_tile.pos.y]
     for x in xs:
         for y in ys:
-            if is_valid_cell_position(x, y):
-                result.append(game_state.map.get_cell(x,y))
+            if x == city_tile.pos.x and y == city_tile.pos.y:
+                continue
+            if is_valid_cell_position(x, y) and not game_state.map.get_cell(x, y).has_resource():
+                result.append(game_state.map.get_cell(x, y))
     return result
 
 
@@ -79,29 +103,27 @@ def get_optimal_adjacent_cell(unit, city):
     return optimal_cell
 
 
-
 def build_city(unit, city, action_list):
     destination = get_optimal_adjacent_cell(unit, city)
-    # find adjacnet unoccupied squares of the city
-    # find closest to unit
-    # move towards
-    # if in that square add action
+    if destination.pos.equals(unit.pos):
+        action_list.append(unit.build_city())
+        return action_list
+    action_list.append(unit.move(unit.pos.direction_to(destination.pos)))
+    return action_list
 
 
 def get_city_to_expand(player, unit):
     for city in player.cities.values():
-        if city.fuel > city.light_upkeep()*10:
+        if city.fuel > city.get_light_upkeep()*10:
             return city
     return None
 
 
-def can_build_city(unit):
-    expansion = get_city_to_expand(unit)
+def can_build_city(player, unit):
+    expansion = get_city_to_expand(player, unit)
     if unit.get_cargo_space_left() == 0 and expansion is not None:   # Potentially optimise so we get rid of least amount of fuel
         return expansion
     return None
-
-
 
 
 def get_closest_city(player, unit):

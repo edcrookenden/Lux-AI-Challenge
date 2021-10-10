@@ -1,6 +1,6 @@
 from typing import Dict
 import sys
-from sendex_example import agent
+from agent import agent
 if __name__ == "__main__":
     
     def read_input():
