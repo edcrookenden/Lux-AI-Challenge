@@ -41,7 +41,7 @@ def agent(observation, configuration):
         if unit.is_worker() and unit.can_act():
             expandable = can_build_city(player, unit)
             if expandable is not None:
-                actions = build_city(unit, expandable, actions)
+                actions = build_city(game_state, unit, expandable, actions)
             else:
                 if unit.get_cargo_space_left() > 0:
                     closest_resource_tile = get_closest_resource(player, resource_tiles, unit)
@@ -62,12 +62,14 @@ def agent(observation, configuration):
     
     return actions
 
+
 def occupied_cells():
     pass
     # want this for collisions
     # Add opponent cities
     # add where are units are moving too
     # Can collide in out own city so these are an exception
+
 
 def is_valid_cell_position(x, y):
     if 0 <= x < game_state.map.width and 0 <= y < game_state.map.height:
@@ -77,14 +79,15 @@ def is_valid_cell_position(x, y):
 
 def get_adjacent_cells(city_tile):
     result = []
-    xs = [city_tile.pos.x - 1, city_tile.pos.x + 1, city_tile.pos.x]
-    ys = [city_tile.pos.y - 1, city_tile.pos.y + 1, city_tile.pos.y]
+    adj_list = []
+    xs = [city_tile.pos.x - 1, city_tile.pos.x + 1]
+    ys = [city_tile.pos.y - 1, city_tile.pos.y + 1]
     for x in xs:
-        for y in ys:
-            if x == city_tile.pos.x and y == city_tile.pos.y:
-                continue
-            if is_valid_cell_position(x, y) and not game_state.map.get_cell(x, y).has_resource():
-                result.append(game_state.map.get_cell(x, y))
+        if is_valid_cell_position(x, city_tile.pos.y) and not game_state.map.get_cell(x, city_tile.pos.y).has_resource():
+            result.append(game_state.map.get_cell(x, city_tile.pos.y))
+    for y in ys:
+        if is_valid_cell_position(city_tile.pos.x, y) and not game_state.map.get_cell(city_tile.pos.x, y).has_resource():
+            result.append(game_state.map.get_cell(city_tile.pos.x, y))
     return result
 
 
@@ -103,18 +106,52 @@ def get_optimal_adjacent_cell(unit, city):
     return optimal_cell
 
 
-def build_city(unit, city, action_list):
+def calc_next_cell(state, source, direction):
+    x = source.pos.x
+    y = source.pos.y
+    if direction == DIRECTIONS.CENTER:
+        return source
+    if direction == DIRECTIONS.NORTH:
+        y = y + 1
+    elif direction == DIRECTIONS.SOUTH:
+        y = y - 1
+    elif direction == DIRECTIONS.WEST:
+        x = x - 1
+    elif direction == DIRECTIONS.EAST:
+        x = x + 1
+    return state.map.get_cell(x, y)
+
+
+def rotate_90_degrees(direction):
+    if direction == DIRECTIONS.CENTER:
+        return DIRECTIONS.CENTER
+    if direction == DIRECTIONS.NORTH:
+        return DIRECTIONS.WEST
+    if direction == DIRECTIONS.SOUTH:
+        return DIRECTIONS.EAST
+    elif direction == DIRECTIONS.WEST:
+        return DIRECTIONS.SOUTH
+    elif direction == DIRECTIONS.EAST:
+        return DIRECTIONS.NORTH
+
+
+def build_city(state, unit, city, action_list):
     destination = get_optimal_adjacent_cell(unit, city)
     if destination.pos.equals(unit.pos):
         action_list.append(unit.build_city())
         return action_list
-    action_list.append(unit.move(unit.pos.direction_to(destination.pos)))
+    direction = unit.pos.direction_to(destination.pos)
+    next_cell = calc_next_cell(state, unit, direction)
+    while next_cell.citytile is not None:
+        direction = rotate_90_degrees(direction)
+        next_cell = calc_next_cell(state, unit, direction) # Edge case where it is trapped not dealt with
+    action_list.append(unit.move(unit.pos.direction_to(next_cell.pos)))
     return action_list
 
 
 def get_city_to_expand(player, unit):
     for city in player.cities.values():
-        if city.fuel > city.get_light_upkeep()*10:
+        if city.fuel > city.get_light_upkeep()*20:
             return city
     return None
 
