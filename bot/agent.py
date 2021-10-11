@@ -48,6 +48,9 @@ def agent(observation, configuration):
     # we iterate over all our units and do something with them
     for unit in player.units:
         if unit.is_worker() and unit.can_act():
+            if len(player.cities.values()) == 0 and unit.get_cargo_space_left() == 0 and \
+                    game_state.map.get_cell(unit.pos.x, unit.pos.y).resource is None:
+                actions.append(unit.build_city())
             expandable = can_build_city(player, unit)
             if expandable is not None:
                 with open(logfile, "a") as f:
@@ -60,8 +63,11 @@ def agent(observation, configuration):
                     closest_resource_tile = get_closest_resource(player, resource_tiles, unit)
                     if closest_resource_tile is not None:
                         move_dir = unit.pos.direction_to(closest_resource_tile.pos)
-                        while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in taken_tiles:
+                        c = 0
+                        while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in taken_tiles \
+                                and c < 5:
                             move_dir = rotate_90_degrees(move_dir)
+                            c += 1
                         taken_tiles.add((unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y))
                         actions.append(unit.move(move_dir))
                 else:
@@ -71,8 +77,11 @@ def agent(observation, configuration):
                         closest_city_tile = get_closest_city(player, unit)
                         if closest_city_tile is not None:
                             move_dir = unit.pos.direction_to(closest_city_tile.pos)
-                            while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in taken_tiles:
+                            c = 0
+                            while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in taken_tiles\
+                                    and c < 5:
                                 move_dir = rotate_90_degrees(move_dir)
+                                c += 1
                             taken_tiles.add((unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y))
                             actions.append(unit.move(move_dir))
 
@@ -160,8 +169,10 @@ def build_city(unit, city, action_list, taken_tiles):
         builder_taken_tiles = taken_tiles.copy()
         builder_taken_tiles.add((city_tile.pos.x, city_tile.pos.y))
     move_dir = unit.pos.direction_to(destination.pos)
-    while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in builder_taken_tiles:
+    c = 0
+    while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in builder_taken_tiles and c < 5:
         move_dir = rotate_90_degrees(move_dir)
+        c += 1
     action_list.append(unit.move(move_dir))
     return action_list
 
