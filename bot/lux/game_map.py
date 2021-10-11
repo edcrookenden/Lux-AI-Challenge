@@ -19,11 +19,15 @@ class Cell:
         self.resource: Resource = None
         self.citytile = None
         self.road = 0
+
     def has_resource(self):
         return self.resource is not None and self.resource.amount > 0
 
 
 class GameMap:
+    opponent_city_tiles = None
+    player_city_tiles = None
+
     def __init__(self, width, height):
         self.height = height
         self.width = width
@@ -45,6 +49,39 @@ class GameMap:
         """
         cell = self.get_cell(x, y)
         cell.resource = Resource(r_type, amount)
+
+    def get_resource_tiles(self):
+        resource_tiles = []
+        for y in range(self.height):
+            for x in range(self.width):
+                cell = self.get_cell(x, y)
+                if cell.has_resource():
+                    resource_tiles.append(cell)
+        return resource_tiles
+
+    def get_opponent_city_tiles(self, opponent):
+        if self.opponent_city_tiles is None:
+            self.opponent_city_tiles = self.generate_tile_set(opponent)
+        return self.opponent_city_tiles
+
+    def get_player_city_tiles(self, player):
+        if self.player_city_tiles is None:
+            self.player_city_tiles = self.generate_tile_set(player)
+        return self.player_city_tiles
+
+    def generate_tile_set(self, player):
+        tile_set = set()
+        for city in player.cities.values():
+            for city_tile in city.citytiles:
+                tile_set.add((city_tile.pos.x, city_tile.pos.y))
+        return tile_set
+
+    def add_future_unit_positions(self, position, system):
+        self.get_opponent_city_tiles(system.opponent)
+        self.opponent_city_tiles.add((position.x, position.y))
+
+    def is_valid_position(self, x, y):
+        return 0 <= x < self.width and 0 <= y < self.height
 
 
 class Position:
@@ -104,3 +141,31 @@ class Position:
 
     def __str__(self) -> str:
         return f"({self.x}, {self.y})"
+
+    def get_adjacent_position(self, system):
+        result = []
+        xs = [self.x - 1, self.x + 1]
+        ys = [self.y - 1, self.y + 1]
+        for x in xs:
+            if system.map.is_valid_position(x, self.y):
+                result.append(Position(x, self.y))
+        for y in ys:
+            if system.map.is_valid_position(self.x, y):
+                result.append(Position(self.x, y))
+        return result
+
+    def is_free(self, system):
+        cell = system.map.get_cell_by_pos(self)
+        return cell.resource == None and cell.citytile == None
+
+    def get_closest_from_list(self, list_of_pos):
+        closest_position = None
+        distance = math.inf
+        for position in list_of_pos:
+            if position is None:
+                return None
+            temp_dist = position.distance_to(self)
+            if temp_dist < distance:
+                closest_position = position
+                distance = temp_dist
+        return closest_position

@@ -2,6 +2,7 @@
 /errorlogs
 /replays
 bot/agent.txt
+bot/test_inputs.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
