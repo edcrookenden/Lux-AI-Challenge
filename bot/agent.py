@@ -4,10 +4,13 @@ from lux.game_map import Cell, RESOURCE_TYPES
 from lux.constants import Constants
 from lux.game_constants import GAME_CONSTANTS
 from lux import annotate
+import random
 
 DIRECTIONS = Constants.DIRECTIONS
 game_state = None
 
+logfile = "agent.log"
+open(logfile, "w")
 
 def agent(observation, configuration):
     global game_state
@@ -36,22 +39,50 @@ def agent(observation, configuration):
                     actions.append(action)
                     num_units += 1
 
+    # Banned cells for collisions
+    taken_tiles = set()
+    for city in opponent.cities.values():
+        for city_tile in city.citytiles:
+            taken_tiles.add((city_tile.pos.x, city_tile.pos.y))
+
     # we iterate over all our units and do something with them
     for unit in player.units:
         if unit.is_worker() and unit.can_act():
+            if len(player.cities.values()) == 0 and unit.get_cargo_space_left() == 0 and \
+                    game_state.map.get_cell(unit.pos.x, unit.pos.y).resource is None:
+                actions.append(unit.build_city())
             expandable = can_build_city(player, unit)
             if expandable is not None:
-                actions = build_city(game_state, unit, expandable, actions)
+                with open(logfile, "a") as f:
+                    f.write(f"{observation['step']}: {unit.id} trying to build a city\n")
+                actions = build_city(unit, expandable, actions, taken_tiles)
             else:
                 if unit.get_cargo_space_left() > 0:
+                    with open(logfile, "a") as f:
+                        f.write(f"{observation['step']}: {unit.id} trying to collect resources\n")
                     closest_resource_tile = get_closest_resource(player, resource_tiles, unit)
                     if closest_resource_tile is not None:
-                        actions.append(unit.move(unit.pos.direction_to(closest_resource_tile.pos)))
+                        move_dir = unit.pos.direction_to(closest_resource_tile.pos)
+                        c = 0
+                        while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in taken_tiles \
+                                and c < 5:
+                            move_dir = rotate_90_degrees(move_dir)
+                            c += 1
+                        taken_tiles.add((unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y))
+                        actions.append(unit.move(move_dir))
                 else:
                     if len(player.cities) > 0:
+                        with open(logfile, "a") as f:
+                            f.write(f"{observation['step']}: {unit.id} trying to deliver resources to city\n")
                         closest_city_tile = get_closest_city(player, unit)
                         if closest_city_tile is not None:
                             move_dir = unit.pos.direction_to(closest_city_tile.pos)
+                            c = 0
+                            while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in taken_tiles\
+                                    and c < 5:
+                                move_dir = rotate_90_degrees(move_dir)
+                                c += 1
+                            taken_tiles.add((unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y))
                             actions.append(unit.move(move_dir))
 
     # build new tile
@@ -123,30 +154,36 @@ def calc_next_cell(state, source, direction):
 
 
 def rotate_90_degrees(direction):
+    dir_list = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
     if direction == DIRECTIONS.CENTER:
-        return DIRECTIONS.CENTER
-    if direction == DIRECTIONS.NORTH:
-        return DIRECTIONS.WEST
-    if direction == DIRECTIONS.SOUTH:
-        return DIRECTIONS.EAST
-    elif direction == DIRECTIONS.WEST:
-        return DIRECTIONS.SOUTH
-    elif direction == DIRECTIONS.EAST:
-        return DIRECTIONS.NORTH
+        return random.choice(dir_list)
+    return dir_list[(dir_list.index(direction) + random.choice([1, -1])) % 4]
 
 
-def build_city(state, unit, city, action_list):
+def build_city(unit, city, action_list, taken_tiles):
     destination = get_optimal_adjacent_cell(unit, city)
     if destination.pos.equals(unit.pos):
         action_list.append(unit.build_city())
         return action_list
-    direction = unit.pos.direction_to(destination.pos)
-    next_cell = calc_next_cell(state, unit, direction)
-    while next_cell.citytile is not None:
-        direction = rotate_90_degrees(direction)
-        next_cell = calc_next_cell(state, unit, direction) # Edge case where it is trapped not dealt with
-    action_list.append(unit.move(unit.pos.direction_to(next_cell.pos)))
+    for city_tile in city.citytiles:
+        builder_taken_tiles = taken_tiles.copy()
+        builder_taken_tiles.add((city_tile.pos.x, city_tile.pos.y))
+    move_dir = unit.pos.direction_to(destination.pos)
+    c = 0
+    while (unit.pos.translate(move_dir, 1).x, unit.pos.translate(move_dir, 1).y) in builder_taken_tiles and c < 5:
+        move_dir = rotate_90_degrees(move_dir)
+        c += 1
+    action_list.append(unit.move(move_dir))
     return action_list
+
+
+    #direction = unit.pos.direction_to(destination.pos)
+    #next_cell = calc_next_cell(state, unit, direction)
+    #while next_cell.citytile is not None:
+    #    direction = rotate_90_degrees(direction)
+    #    next_cell = calc_next_cell(state, unit, direction) # Edge case where it is trapped not dealt with
+    #action_list.append(unit.move(unit.pos.direction_to(next_cell.pos)))
+    #return action_list
 
 
 def get_city_to_expand(player, unit):
