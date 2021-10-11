@@ -157,7 +157,7 @@ def rotate_90_degrees(direction):
     dir_list = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
     if direction == DIRECTIONS.CENTER:
         return random.choice(dir_list)
-    return dir_list[(dir_list.index(direction) + 1) % 4]
+    return dir_list[(dir_list.index(direction) + random.choice([1, -1])) % 4]
 
 
 def build_city(unit, city, action_list, taken_tiles):
