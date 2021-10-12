@@ -1,4 +1,5 @@
 import math
+from typing import List, Optional
 
 from .constants import Constants
 
@@ -7,25 +8,25 @@ DIRECTIONS = Constants.DIRECTIONS
 
 class Position:
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
+        self.x: int = x
+        self.y: int = y
 
     def __sub__(self, pos) -> int:
         return abs(pos.x - self.x) + abs(pos.y - self.y)
 
-    def distance_to(self, pos):
+    def distance_to(self, pos) -> int:
         """
         Returns Manhattan (L1/grid) distance to pos
         """
         return self - pos
 
-    def is_adjacent(self, pos):
+    def is_adjacent(self, pos) -> bool:
         return (self - pos) <= 1
 
     def __eq__(self, pos) -> bool:
         return self.x == pos.x and self.y == pos.y
 
-    def equals(self, pos):
+    def equals(self, pos) -> bool:
         return self == pos
 
     def translate(self, direction, units) -> 'Position':
@@ -63,7 +64,7 @@ class Position:
     def __str__(self) -> str:
         return f"({self.x}, {self.y})"
 
-    def get_adjacent_position(self, system):
+    def get_adjacent_position(self, system) -> List['Position']:
         result = []
         xs = [self.x - 1, self.x + 1]
         ys = [self.y - 1, self.y + 1]
@@ -75,11 +76,11 @@ class Position:
                 result.append(Position(self.x, y))
         return result
 
-    def is_free(self, system):
+    def is_free(self, system) -> bool:
         cell = system.map.get_cell_by_pos(self)
         return cell.resource == None and cell.citytile == None
 
-    def get_closest_from_list(self, list_of_pos):
+    def get_closest_from_list(self, list_of_pos) -> Optional['Position']:
         closest_position = None
         distance = math.inf
         for position in list_of_pos:

@@ -3,10 +3,10 @@ from .position import Position
 
 class CityTile:
     def __init__(self, teamid, cityid, x, y, cooldown):
-        self.cityid = cityid
-        self.team = teamid
-        self.pos = Position(x, y)
-        self.cooldown = cooldown
+        self.cityid: int = cityid
+        self.team: int = teamid
+        self.pos: Position = Position(x, y)
+        self.cooldown: float = cooldown
 
     def can_act(self) -> bool:
         """
@@ -32,7 +32,7 @@ class CityTile:
         """
         return "bc {} {}".format(self.pos.x, self.pos.y)
 
-    def activate_action(self, system, player):  # Player
+    def activate_action(self, system, player) -> None:  # Player
         max_workers = (player.get_num_units() >= player.get_max_units())
         if self.can_act():
             if max_workers:
@@ -43,7 +43,7 @@ class CityTile:
                 system.actions.append(action)
                 player.temp_extra_units += 1
 
-    def get_closest_free_adjacent_position(self, pos, system):
+    def get_closest_free_adjacent_position(self, pos, system) -> Position:
         adjacent_positions = self.pos.get_adjacent_position(system)
         free_positions = [x for x in adjacent_positions if x.is_free(system)]
         return pos.get_closest_from_list(free_positions)

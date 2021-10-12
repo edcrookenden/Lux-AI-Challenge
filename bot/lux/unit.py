@@ -6,24 +6,23 @@ from .constants_helpers import rotate_90_degrees
 UNIT_TYPES = Constants.UNIT_TYPES
 
 
-class Cargo:
-    def __init__(self):
-        self.wood = 0
-        self.coal = 0
-        self.uranium = 0
-
-    def __str__(self) -> str:
-        return f"Cargo | Wood: {self.wood}, Coal: {self.coal}, Uranium: {self.uranium}"
-
-
 class Unit:
+    class Cargo:
+        def __init__(self):
+            self.wood: int = 0
+            self.coal: int = 0
+            self.uranium: int = 0
+
+        def __str__(self) -> str:
+            return f"Cargo | Wood: {self.wood}, Coal: {self.coal}, Uranium: {self.uranium}"
+
     def __init__(self, teamid, u_type, unitid, x, y, cooldown, wood, coal, uranium):
-        self.pos = Position(x, y)
-        self.team = teamid
-        self.id = unitid
-        self.type = u_type
-        self.cooldown = cooldown
-        self.cargo = Cargo()
+        self.pos: Position = Position(x, y)
+        self.team: int = teamid
+        self.id: int = unitid
+        self.type: UNIT_TYPES = u_type
+        self.cooldown: int = cooldown
+        self.cargo: Unit.Cargo = Unit.Cargo()
         self.cargo.wood = wood
         self.cargo.coal = coal
         self.cargo.uranium = uranium
@@ -34,7 +33,7 @@ class Unit:
     def is_cart(self) -> bool:
         return self.type == UNIT_TYPES.CART
 
-    def get_cargo_space_left(self):
+    def get_cargo_space_left(self) -> int:
         """
         get cargo space left in this unit
         """
@@ -84,41 +83,41 @@ class Unit:
         """
         return "p {}".format(self.id)
 
-    def activate_actions(self, system, player):
+    def activate_actions(self, system, player) -> None:
         if self.can_act():
             if system.player.cities == 0 and self.can_build(system.map):
                 # with open("agent.log", "a") as f:
                 #     f.write(f"{system.step}: {self.id} trying to build emergency city\n")
-                self.build_city_here(system)
+                self.__build_city_here(system)
             elif self.get_cargo_space_left() == 0 and player.has_cities_to_expand():
                 # with open("agent.log", "a") as f:
                 #     f.write(f"{system.step}: {self.id} trying to build city\n")
-                self.try_to_build_city(system, player)
+                self.__try_to_build_city(system, player)
             elif self.get_cargo_space_left() > 0:
                 # with open("agent.log", "a") as f:
                 #     f.write(f"{system.step}: {self.id} trying to collect resources\n")
-                self.collect_resources(system)
+                self.__collect_resources(system)
             else:
                 # with open("agent.log", "a") as f:
                 #     f.write(f"{system.step}: {self.id} trying to deposit resources\n")
-                self.deposit_resources_in_city(system)
+                self.__deposit_resources_in_city(system)
 
-    def build_city_here(self, system):
+    def __build_city_here(self, system) -> None:
         system.actions.append(self.build_city())
         system.map.add_future_unit_positions(self.pos, system)
 
-    def try_to_build_city(self, system, player):
+    def __try_to_build_city(self, system, player) -> None:
         destination = player.get_optimal_new_build_cell(self.pos, system)
         if destination is None:
             return
         if destination.equals(self.pos):
-            self.build_city_here(system)
+            self.__build_city_here(system)
         else:
             no_go_tiles = system.map.get_opponent_city_tiles(system.opponent).union(system.map.get_player_city_tiles(
                 system.player))
-            self.move_without_collision(destination, no_go_tiles, system)
+            self.__move_without_collision(destination, no_go_tiles, system)
 
-    def move_without_collision(self, destination, no_go_tiles, system):
+    def __move_without_collision(self, destination, no_go_tiles, system) -> None:
         if destination is not None:
             move_direction = self.pos.direction_to(destination)
             c = 0
@@ -130,16 +129,16 @@ class Unit:
             system.actions.append(self.move(move_direction))
             system.map.add_future_unit_positions(self.pos.translate(move_direction, 1), system)
 
-    def collect_resources(self, system):
+    def __collect_resources(self, system) -> None:
         resources = system.map.get_resource_tiles()
         no_go_tiles = system.map.get_opponent_city_tiles(system.opponent)
         closest_resource_position = self.pos.get_closest_from_list([x.pos for x in resources])
         with open("agent.log", "a") as f:
             f.write(f"{system.step}: {self.id} closest resource: {closest_resource_position}\n")
-        self.move_without_collision(closest_resource_position, no_go_tiles, system)
+        self.__move_without_collision(closest_resource_position, no_go_tiles, system)
 
-    def deposit_resources_in_city(self, system):
+    def __deposit_resources_in_city(self, system) -> None:
         citytiles = system.map.get_player_city_tiles(system.player)
         no_go_tiles = system.map.get_opponent_city_tiles(system.opponent)
         closest_citytile_position = self.pos.get_closest_from_list([Position(x[0], x[1]) for x in citytiles])
-        self.move_without_collision(closest_citytile_position, no_go_tiles, system)
+        self.__move_without_collision(closest_citytile_position, no_go_tiles, system)
