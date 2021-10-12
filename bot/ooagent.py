@@ -70,12 +70,12 @@ class GameSystem:
         self.step = observation["step"]
         self.clock = Clock(self.step)
         self.map.calculate_metrics(self)
-        self.read_history()
+        # self.read_history()
 
     def run(self) -> List[str]:
         self.player.activate_city_actions(self)
         self.player.activate_unit_actions(self)
-        self.write_history()
+        # self.write_history()
         return self.actions
 
     def add_action(self, action: str) -> None:

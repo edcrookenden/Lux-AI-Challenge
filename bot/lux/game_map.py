@@ -59,10 +59,17 @@ class GameMap:
     def is_collision_tile(self, pos) -> bool:
         return ((pos.x, pos.y) in self.opponent_city_tiles) or ((pos.x, pos.y) in self.future_no_go_tiles)
 
-    def get_closest_resource_position(self, pos) -> Position:
-        return pos.get_closest_from_list([a.pos for a in self.resource_cells])
+    def get_closest_resource_position(self, pos, system) -> Position:
+        researched_resource_cells = self.resource_cells.copy()
+        if not system.player.researched_uranium():
+            researched_resource_cells = [a for a in researched_resource_cells if
+                                         a.resource.type != Constants.RESOURCE_TYPES.URANIUM]
+        if not system.player.researched_coal():
+            researched_resource_cells = [a for a in researched_resource_cells if
+                                         a.resource.type != Constants.RESOURCE_TYPES.COAL]
+        return pos.get_closest_from_list([a.pos for a in researched_resource_cells if system.player])
 
-    def get_closest_city_tile(self, pos) -> Position:
+    def get_closest_city_tile(self, pos, system) -> Position:
         return pos.get_closest_from_list(self.get_player_city_positions())
 
     def get_closest_safe_tile(self, pos) -> Position:
@@ -72,19 +79,19 @@ class GameMap:
     def get_distance_to_safe_tile(self, pos) -> int:
         return pos.distance_to(self.get_closest_safe_tile(pos))
 
-    def get_optimal_build_position(self, pos, closest_function) -> Optional[Position]:
-        closest = closest_function(pos)
+    def get_optimal_build_position(self, pos, closest_function, system) -> Optional[Position]:
+        closest = closest_function(pos, system)
         if closest is None: return None
         adjacent_positions = closest.get_adjacent_positions()
         build_positions = self.filter_position_list(adjacent_positions, self.is_on_board)
         build_positions = self.filter_position_list(build_positions, self.is_free)
         return pos.get_closest_from_list(build_positions)
 
-    def get_optimal_position_to_expand(self, pos) -> Position:
-        return self.get_optimal_build_position(pos, self.get_closest_city_tile)
+    def get_optimal_position_to_expand(self, pos, system) -> Position:
+        return self.get_optimal_build_position(pos, self.get_closest_city_tile, system)
 
-    def get_optimal_position_to_build_new_city(self, pos) -> Position:
-        return self.get_optimal_build_position(pos, self.get_closest_resource_position)
+    def get_optimal_position_to_build_new_city(self, pos, system) -> Position:
+        return self.get_optimal_build_position(pos, self.get_closest_resource_position, system)
 
     def is_free(self, pos) -> bool:
         cell = self.get_cell_by_pos(pos)

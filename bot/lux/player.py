@@ -40,9 +40,9 @@ class Player:
             unit.activate_actions(system, self)
 
     def has_cities_to_expand(self) -> bool:
-        expandable = True
+        expandable = False
         for city in self.cities.values():
-            expandable = expandable and city.can_expand()
+            expandable = expandable or city.can_expand()
         return expandable
 
     # def get_optimal_new_build_cell(self, pos, system) -> Position:
