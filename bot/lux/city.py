@@ -3,6 +3,7 @@ from .position import Position
 from .constants import Constants
 
 NIGHT_DURATION = Constants.TIME.NIGHT_DURATION
+NUMBER_OF_NIGHTS_BACKUP = Constants.GAME_PARAMETERS.NUMBER_OF_NIGHTS_BACKUP
 
 
 class City:
@@ -32,4 +33,4 @@ class City:
         return pos.get_closest_from_list(citytiles)
 
     def can_expand(self):
-        return self.fuel > self.light_upkeep * NIGHT_DURATION * 2
+        return self.fuel > self.light_upkeep * NIGHT_DURATION * NUMBER_OF_NIGHTS_BACKUP

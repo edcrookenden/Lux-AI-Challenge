@@ -2,6 +2,9 @@ from typing import List, Optional, Set, Tuple
 
 from .cell import Cell
 from .position import Position
+from .constants import Constants
+
+MAX_DISTANCES = Constants.GAME_PARAMETERS.MAX_DISTANCES
 
 
 class GameMap:
@@ -91,8 +94,7 @@ class GameMap:
         return [a for a in positions if filter_function(a)]
 
     def city_is_too_far(self, city_pos, unit_pos):
-        return city_pos.distance_to(unit_pos) > 2
-
+        return city_pos.distance_to(unit_pos) > MAX_DISTANCES[self.height]
 
     # ---------------------------------- Private functions ------------------------------------- #
 

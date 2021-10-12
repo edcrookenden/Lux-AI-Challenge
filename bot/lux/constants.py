@@ -34,3 +34,7 @@ class Constants:
         DAY_DURATION = 30
         NIGHT_DURATION = 10
         TOTAL_CYCLES = 9
+
+    class GAME_PARAMETERS:
+        NUMBER_OF_NIGHTS_BACKUP = 2
+        MAX_DISTANCES = {12: 4, 16: 6, 24: 8, 32: 10}

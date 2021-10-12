@@ -163,7 +163,6 @@ class Unit:
                 self.activate_maintainer_actions(system)
             else:
                 self.activate_builder_actions(system, player)
-                self.activate_maintainer_actions(system)
 
     def activate_builder_actions(self, system, player):
         if self.get_cargo_space_left() > 0:
