@@ -104,7 +104,7 @@ class Unit:
 
     def __build_city_here(self, system) -> None:
         system.actions.append(self.build_city())
-        system.map.add_future_unit_positions(self.pos, system)
+        system.map.add_future_no_go_tiles(self.pos)
 
     def __try_to_build_city(self, system, player) -> None:
         destination = player.get_optimal_new_build_cell(self.pos, system)
@@ -113,32 +113,31 @@ class Unit:
         if destination.equals(self.pos):
             self.__build_city_here(system)
         else:
-            no_go_tiles = system.map.get_opponent_city_tiles(system.opponent).union(system.map.get_player_city_tiles(
-                system.player))
-            self.__move_without_collision(destination, no_go_tiles, system)
+            all_city_tiles = system.map.get_opponent_city_tiles().union(system.map.get_player_city_tiles())
+            self.__move_without_collision(destination, all_city_tiles, system)
 
     def __move_without_collision(self, destination, no_go_tiles, system) -> None:
         if destination is not None:
             move_direction = self.pos.direction_to(destination)
             c = 0
             new_position = self.pos.translate(move_direction, 1)
-            while (new_position.x, new_position.y) in no_go_tiles and c < 5:
+            while (new_position.x, new_position.y) in no_go_tiles and c < 5:#################
                 move_direction = rotate_90_degrees(move_direction)
                 new_position = self.pos.translate(move_direction, 1)
                 c += 1
             system.actions.append(self.move(move_direction))
-            system.map.add_future_unit_positions(self.pos.translate(move_direction, 1), system)
+            system.map.add_future_no_go_tiles(self.pos.translate(move_direction, 1))
 
     def __collect_resources(self, system) -> None:
         resources = system.map.get_resource_tiles()
-        no_go_tiles = system.map.get_opponent_city_tiles(system.opponent)
+        no_go_tiles = system.map.get_opponent_city_tiles().union(system.map.future_no_go_tiles)
         closest_resource_position = self.pos.get_closest_from_list([x.pos for x in resources])
         with open("agent.log", "a") as f:
             f.write(f"{system.step}: {self.id} closest resource: {closest_resource_position}\n")
         self.__move_without_collision(closest_resource_position, no_go_tiles, system)
 
     def __deposit_resources_in_city(self, system) -> None:
-        citytiles = system.map.get_player_city_tiles(system.player)
-        no_go_tiles = system.map.get_opponent_city_tiles(system.opponent)
-        closest_citytile_position = self.pos.get_closest_from_list([Position(x[0], x[1]) for x in citytiles])
+        citytiles = system.map.get_player_city_tiles()
+        no_go_tiles = system.map.get_opponent_city_tiles().union(system.map.future_no_go_tiles)
+        closest_citytile_position = self.pos.get_closest_from_list([Position(x[0], x[1]) for x in citytiles]) ####################
         self.__move_without_collision(closest_citytile_position, no_go_tiles, system)

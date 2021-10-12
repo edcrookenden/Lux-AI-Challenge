@@ -62,6 +62,7 @@ class GameSystem:
         self.opponent = game_state.players[(observation.player + 1) % 2]
         self.map = game_state.map
         self.step = observation["step"]
+        self.map.calculate_metrics(self)
 
     def run(self) -> List[str]:
         self.player.activate_city_actions(self)

@@ -4,10 +4,13 @@ from .cell import Cell
 
 
 class GameMap:
-    opponent_city_tiles: Set[Tuple[int, int]] = None
-    player_city_tiles: Set[Tuple[int, int]] = None
+    # ----------------------------------- Public functions ------------------------------------- #
 
     def __init__(self, width, height):
+        self.resource_tiles: List[Cell] = []
+        self.opponent_city_tiles: Set[Tuple[int, int]] = set()
+        self.player_city_tiles: Set[Tuple[int, int]] = set()
+        self.future_no_go_tiles: Set[Tuple[int, int]] = set()
         self.height: int = height
         self.width: int = width
         self.map: List[List[Cell]] = [None] * height
@@ -22,14 +25,36 @@ class GameMap:
     def get_cell(self, x, y) -> Cell:
         return self.map[y][x]
 
-    def _setResource(self, r_type, x, y, amount):
-        """
-        do not use this function, this is for internal tracking of state
-        """
-        cell = self.get_cell(x, y)
-        cell.resource = Cell.Resource(r_type, amount)
+    def calculate_metrics(self, system):
+        self.resource_tiles = self.__generate_resource_tiles()
+        self.player_city_tiles = self.__generate_tile_set(system.player)
+        self.opponent_city_tiles = self.__generate_tile_set(system.opponent)
 
     def get_resource_tiles(self) -> List[Cell]:
+        return self.resource_tiles
+
+    def get_opponent_city_tiles(self) -> Set[Tuple[int, int]]:
+        return self.opponent_city_tiles
+
+    def get_player_city_tiles(self) -> Set[Tuple[int, int]]:
+        return self.player_city_tiles
+
+    def add_future_no_go_tiles(self, position) -> None:
+        self.future_no_go_tiles.add((position.x, position.y))
+
+    def is_valid_position(self, x, y) -> bool:
+        return 0 <= x < self.width and 0 <= y < self.height
+
+    # ---------------------------------- Private functions ------------------------------------- #
+
+    def __generate_tile_set(self, player) -> Set[Tuple[int, int]]:
+        tile_set = set()
+        for city in player.cities.values():
+            for city_tile in city.citytiles:
+                tile_set.add((city_tile.pos.x, city_tile.pos.y))
+        return tile_set
+
+    def __generate_resource_tiles(self):
         resource_tiles = []
         for y in range(self.height):
             for x in range(self.width):
@@ -38,28 +63,11 @@ class GameMap:
                     resource_tiles.append(cell)
         return resource_tiles
 
-    def get_opponent_city_tiles(self, opponent) -> Set[Tuple[int, int]]:
-        if self.opponent_city_tiles is None:
-            self.opponent_city_tiles = self.generate_tile_set(opponent)
-        return self.opponent_city_tiles
+    # --------------------------------------- Do not use --------------------------------------- #
 
-    def get_player_city_tiles(self, player) -> Set[Tuple[int, int]]:
-        if self.player_city_tiles is None:
-            self.player_city_tiles = self.generate_tile_set(player)
-        return self.player_city_tiles
-
-    def generate_tile_set(self, player) -> Set[Tuple[int, int]]:
-        tile_set = set()
-        for city in player.cities.values():
-            for city_tile in city.citytiles:
-                tile_set.add((city_tile.pos.x, city_tile.pos.y))
-        return tile_set
-
-    def add_future_unit_positions(self, position, system) -> None:
-        self.get_opponent_city_tiles(system.opponent)
-        self.opponent_city_tiles.add((position.x, position.y))
-
-    def is_valid_position(self, x, y) -> bool:
-        return 0 <= x < self.width and 0 <= y < self.height
-
-
+    def _setResource(self, r_type, x, y, amount):
+        """
+        do not use this function, this is for internal tracking of state
+        """
+        cell = self.get_cell(x, y)
+        cell.resource = Cell.Resource(r_type, amount)
