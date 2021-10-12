@@ -1,6 +1,7 @@
 import random
 from typing import List, Optional
 
+from lux.clock import Clock
 from lux.gamesetup.game import GameMap
 from lux.player import Player
 from lux.constants import Constants
@@ -48,6 +49,7 @@ class GameSystem:
         self.opponent: Optional[Player] = None
         self.map: Optional[GameMap] = None
         self.step: int = 0
+        self.clock: Optional[Clock] = None
 
     def setup(self, observation) -> None:
         global game_state
@@ -62,11 +64,17 @@ class GameSystem:
         self.opponent = game_state.players[(observation.player + 1) % 2]
         self.map = game_state.map
         self.step = observation["step"]
+        self.clock = Clock(self.step)
+        self.map.calculate_metrics(self)
 
     def run(self) -> List[str]:
         self.player.activate_city_actions(self)
         self.player.activate_unit_actions(self)
         return self.actions
+
+    def add_action(self, action: str) -> None:
+        if action is not None:
+            self.actions.append(action)
 
 
 def agent(observation, configuration):

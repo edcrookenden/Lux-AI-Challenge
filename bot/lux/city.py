@@ -1,5 +1,8 @@
 from .citytile import CityTile
 from .position import Position
+from .constants import Constants
+
+NIGHT_DURATION = Constants.TIME.NIGHT_DURATION
 
 
 class City:
@@ -27,3 +30,6 @@ class City:
         for citytile in self.citytiles:
             citytiles.append(citytile.get_closest_free_adjacent_position(pos, system))
         return pos.get_closest_from_list(citytiles)
+
+    def can_expand(self):
+        return self.fuel > self.light_upkeep * NIGHT_DURATION * 2
