@@ -1,131 +1,9 @@
-import math
-from typing import Dict
-
 from .constants import Constants
-from .game_map import Position
-from .game_constants import GAME_CONSTANTS
+from .gamesetup.game_constants import GAME_CONSTANTS
+from .position import Position
+from .constants_helpers import rotate_90_degrees
 
 UNIT_TYPES = Constants.UNIT_TYPES
-
-
-class Player:
-    temp_extra_units = 0
-
-    def __init__(self, team):
-        self.team = team
-        self.research_points = 0
-        self.units: list[Unit] = []
-        self.cities: Dict[str, City] = {}
-        self.city_tile_count = 0
-
-    def researched_coal(self) -> bool:
-        return self.research_points >= GAME_CONSTANTS["PARAMETERS"]["RESEARCH_REQUIREMENTS"]["COAL"]
-
-    def researched_uranium(self) -> bool:
-        return self.research_points >= GAME_CONSTANTS["PARAMETERS"]["RESEARCH_REQUIREMENTS"]["URANIUM"]
-
-    def get_max_units(self):
-        return sum([len(x.citytiles) for x in self.cities.values()])
-
-    def get_num_units(self):
-        return len(self.units)
-
-    def activate_city_actions(self, system):
-        self.temp_extra_units = self.get_num_units()
-        for city in self.cities.values():
-            city.activate_citytile_actions(system, self)
-
-    def activate_unit_actions(self, system):
-        for unit in self.units:
-            unit.activate_actions(system, self)
-
-    def has_cities_to_expand(self):
-        for city in self.cities.values():
-            # If final day, just return True
-            if city.fuel > city.get_light_upkeep() * 20:
-                return True
-        return False
-
-    def get_optimal_new_build_cell(self, pos, system):
-        closest_from_each_city = []
-        for city in self.cities.values():
-            closest_from_each_city.append(city.get_closest_adjacent_cell(pos, system))
-        return pos.get_closest_from_list(closest_from_each_city)
-
-
-class City:
-    def __init__(self, teamid, cityid, fuel, light_upkeep):
-        self.cityid = cityid
-        self.team = teamid
-        self.fuel = fuel
-        self.citytiles: list[CityTile] = []
-        self.light_upkeep = light_upkeep
-
-    def _add_city_tile(self, x, y, cooldown):
-        ct = CityTile(self.team, self.cityid, x, y, cooldown)
-        self.citytiles.append(ct)
-        return ct
-
-    def get_light_upkeep(self):
-        return self.light_upkeep
-
-    def activate_citytile_actions(self, system, player):
-        for tile in self.citytiles:
-            tile.activate_action(system, player)
-
-    def get_closest_adjacent_cell(self, pos, system):
-        citytiles = []
-        for citytile in self.citytiles:
-            citytiles.append(citytile.get_closest_free_adjacent_position(pos, system))
-        return pos.get_closest_from_list(citytiles)
-
-
-class CityTile:
-    def __init__(self, teamid, cityid, x, y, cooldown):
-        self.cityid = cityid
-        self.team = teamid
-        self.pos = Position(x, y)
-        self.cooldown = cooldown
-
-    def can_act(self) -> bool:
-        """
-        Whether or not this unit can research or build
-        """
-        return self.cooldown < 1
-
-    def research(self) -> str:
-        """
-        returns command to ask this tile to research this turn
-        """
-        return "r {} {}".format(self.pos.x, self.pos.y)
-
-    def build_worker(self) -> str:
-        """
-        returns command to ask this tile to build a worker this turn
-        """
-        return "bw {} {}".format(self.pos.x, self.pos.y)
-
-    def build_cart(self) -> str:
-        """
-        returns command to ask this tile to build a cart this turn
-        """
-        return "bc {} {}".format(self.pos.x, self.pos.y)
-
-    def activate_action(self, system, player):  # Player
-        max_workers = (player.get_num_units() >= player.get_max_units())
-        if self.can_act():
-            if max_workers:
-                action = self.research()
-                system.actions.append(action)
-            else:
-                action = self.build_worker()
-                system.actions.append(action)
-                player.temp_extra_units += 1
-
-    def get_closest_free_adjacent_position(self, pos, system):
-        adjacent_positions = self.pos.get_adjacent_position(system)
-        free_positions = [x for x in adjacent_positions if x.is_free(system)]
-        return pos.get_closest_from_list(free_positions)
 
 
 class Cargo:
@@ -246,7 +124,7 @@ class Unit:
             c = 0
             new_position = self.pos.translate(move_direction, 1)
             while (new_position.x, new_position.y) in no_go_tiles and c < 5:
-                move_direction = system.rotate_90_degrees(move_direction)
+                move_direction = rotate_90_degrees(move_direction)
                 new_position = self.pos.translate(move_direction, 1)
                 c += 1
             system.actions.append(self.move(move_direction))
