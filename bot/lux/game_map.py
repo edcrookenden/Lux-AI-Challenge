@@ -1,15 +1,15 @@
-from typing import List
+from typing import List, Optional, Set, Tuple
 
-from .cell import Resource, Cell
+from .cell import Cell
 
 
 class GameMap:
-    opponent_city_tiles = None
-    player_city_tiles = None
+    opponent_city_tiles: Set[Tuple[int, int]] = None
+    player_city_tiles: Set[Tuple[int, int]] = None
 
     def __init__(self, width, height):
-        self.height = height
-        self.width = width
+        self.height: int = height
+        self.width: int = width
         self.map: List[List[Cell]] = [None] * height
         for y in range(0, self.height):
             self.map[y] = [None] * width
@@ -27,9 +27,9 @@ class GameMap:
         do not use this function, this is for internal tracking of state
         """
         cell = self.get_cell(x, y)
-        cell.resource = Resource(r_type, amount)
+        cell.resource = Cell.Resource(r_type, amount)
 
-    def get_resource_tiles(self):
+    def get_resource_tiles(self) -> List[Cell]:
         resource_tiles = []
         for y in range(self.height):
             for x in range(self.width):
@@ -38,28 +38,28 @@ class GameMap:
                     resource_tiles.append(cell)
         return resource_tiles
 
-    def get_opponent_city_tiles(self, opponent):
+    def get_opponent_city_tiles(self, opponent) -> Set[Tuple[int, int]]:
         if self.opponent_city_tiles is None:
             self.opponent_city_tiles = self.generate_tile_set(opponent)
         return self.opponent_city_tiles
 
-    def get_player_city_tiles(self, player):
+    def get_player_city_tiles(self, player) -> Set[Tuple[int, int]]:
         if self.player_city_tiles is None:
             self.player_city_tiles = self.generate_tile_set(player)
         return self.player_city_tiles
 
-    def generate_tile_set(self, player):
+    def generate_tile_set(self, player) -> Set[Tuple[int, int]]:
         tile_set = set()
         for city in player.cities.values():
             for city_tile in city.citytiles:
                 tile_set.add((city_tile.pos.x, city_tile.pos.y))
         return tile_set
 
-    def add_future_unit_positions(self, position, system):
+    def add_future_unit_positions(self, position, system) -> None:
         self.get_opponent_city_tiles(system.opponent)
         self.opponent_city_tiles.add((position.x, position.y))
 
-    def is_valid_position(self, x, y):
+    def is_valid_position(self, x, y) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
 
