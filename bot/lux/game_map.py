@@ -62,6 +62,13 @@ class GameMap:
     def get_closest_city_tile(self, pos) -> Position:
         return pos.get_closest_from_list(self.get_player_city_positions())
 
+    def get_closest_safe_tile(self, pos) -> Position:
+        safe_tiles = [a.pos for a in self.resource_cells] + self.get_player_city_positions()
+        return pos.get_closest_from_list(safe_tiles)
+
+    def get_distance_to_safe_tile(self, pos) -> int:
+        return pos.distance_to(self.get_closest_safe_tile(pos))
+
     def get_optimal_build_position(self, pos, closest_function) -> Optional[Position]:
         closest = closest_function(pos)
         if closest is None: return None
