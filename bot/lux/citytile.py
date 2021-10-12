@@ -33,17 +33,15 @@ class CityTile:
         return "bc {} {}".format(self.pos.x, self.pos.y)
 
     def activate_action(self, system, player) -> None:  # Player
-        max_workers = (player.get_num_units() >= player.get_max_units())
+        max_workers = (player.units_plus_added_this_turn >= player.get_max_units())
         if self.can_act():
             if max_workers:
-                action = self.research()
-                system.actions.append(action)
+                system.add_action(self.research())
             else:
-                action = self.build_worker()
-                system.actions.append(action)
-                player.temp_extra_units += 1
+                system.add_action(self.build_worker())
+                player.units_plus_added_this_turn += 1
 
     def get_closest_free_adjacent_position(self, pos, system) -> Position:
-        adjacent_positions = self.pos.get_adjacent_position(system)
-        free_positions = [x for x in adjacent_positions if x.is_free(system)]
+        adjacent_positions = self.pos.get_adjacent_positions(system) ############################################
+        free_positions = [x for x in adjacent_positions if system.map.is_free(x)]
         return pos.get_closest_from_list(free_positions)

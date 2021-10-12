@@ -29,7 +29,7 @@ class Position:
     def equals(self, pos) -> bool:
         return self == pos
 
-    def translate(self, direction, units) -> 'Position':
+    def translate(self, direction, units) -> Optional['Position']:
         if direction == DIRECTIONS.NORTH:
             return Position(self.x, self.y - units)
         elif direction == DIRECTIONS.EAST:
@@ -40,6 +40,7 @@ class Position:
             return Position(self.x - units, self.y)
         elif direction == DIRECTIONS.CENTER:
             return Position(self.x, self.y)
+        return None
 
     def direction_to(self, target_pos: 'Position') -> DIRECTIONS:
         """
@@ -64,21 +65,15 @@ class Position:
     def __str__(self) -> str:
         return f"({self.x}, {self.y})"
 
-    def get_adjacent_position(self, system) -> List['Position']:
+    def get_adjacent_positions(self) -> List['Position']:
         result = []
         xs = [self.x - 1, self.x + 1]
         ys = [self.y - 1, self.y + 1]
         for x in xs:
-            if system.map.is_valid_position(x, self.y):
-                result.append(Position(x, self.y))
+            result.append(Position(x, self.y))
         for y in ys:
-            if system.map.is_valid_position(self.x, y):
-                result.append(Position(self.x, y))
+            result.append(Position(self.x, y))
         return result
-
-    def is_free(self, system) -> bool:
-        cell = system.map.get_cell_by_pos(self)
-        return cell.resource == None and cell.citytile == None
 
     def get_closest_from_list(self, list_of_pos) -> Optional['Position']:
         closest_position = None

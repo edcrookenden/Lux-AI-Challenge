@@ -14,6 +14,7 @@ class Constants:
         SOUTH = "s"
         EAST = "e"
         CENTER = "c"
+        DIR_LIST = [NORTH, EAST, SOUTH, WEST]
 
     class UNIT_TYPES:
         WORKER = 0
@@ -23,3 +24,13 @@ class Constants:
         WOOD = "wood"
         URANIUM = "uranium"
         COAL = "coal"
+
+    class TIME:
+        NIGHT_END = 40
+        AFTERNOON_END = 30
+        MIDDAY_END = 20
+        MORNING_END = 10
+        CYCLE_DURATION = 40
+        DAY_DURATION = 30
+        NIGHT_DURATION = 10
+        TOTAL_CYCLES = 9
