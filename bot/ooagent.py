@@ -1,5 +1,6 @@
+import json
 import random
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from lux.clock import Clock
 from lux.gamesetup.game import GameMap
@@ -43,6 +44,8 @@ class GameSystem:
         returns a random cardinal directions 90 degrees from the input direction
     """
 
+    HISTORY: str = "lux/history.json"
+
     def __init__(self) -> None:
         self.actions: List[str] = []
         self.player: Optional[Player] = None
@@ -50,6 +53,7 @@ class GameSystem:
         self.map: Optional[GameMap] = None
         self.step: int = 0
         self.clock: Optional[Clock] = None
+        self.history: Dict[str, any] = {}
 
     def setup(self, observation) -> None:
         global game_state
@@ -66,16 +70,26 @@ class GameSystem:
         self.step = observation["step"]
         self.clock = Clock(self.step)
         self.map.calculate_metrics(self)
+        self.read_history()
 
     def run(self) -> List[str]:
         self.player.activate_city_actions(self)
         self.player.activate_unit_actions(self)
+        self.write_history()
         return self.actions
 
     def add_action(self, action: str) -> None:
         if action is not None:
             self.actions.append(action)
 
+    def read_history(self):
+        with open(self.HISTORY, "r") as json_file:
+            last_turn = json.load(json_file)
+        self.history = {"last_turn": last_turn}
+
+    def write_history(self):
+        with open(self.HISTORY, "w") as json_file:
+            json.dump(self.history, json_file)
 
 def agent(observation, configuration):
     system = GameSystem()

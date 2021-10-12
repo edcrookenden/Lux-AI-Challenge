@@ -90,6 +90,8 @@ class Unit:
 
     def activate_actions(self, system, player) -> None:
         if self.can_act():
+            if system.clock.is_night():
+                return None
             if system.player.cities == 0 and self.can_build(system.map):
                 self.__build_city_here(system)
             elif self.get_cargo_space_left() == 0 and player.has_cities_to_expand():
