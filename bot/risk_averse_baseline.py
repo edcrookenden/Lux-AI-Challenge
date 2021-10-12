@@ -1,8 +1,7 @@
-from lux.game import Game
-from lux.game_map import Cell, RESOURCE_TYPES, Position
-from lux.constants import Constants
-from lux.game_constants import GAME_CONSTANTS
-from lux import annotate
+from .lux.gamesetup.game import Game
+from .lux.cell import Cell
+from .lux.constants import Constants
+from .lux.gamesetup import annotate
 import math
 import numpy as np
 

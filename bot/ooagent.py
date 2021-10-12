@@ -1,10 +1,10 @@
-import math, sys
-from lux.game import Game
-from lux.game_map import Cell, RESOURCE_TYPES
-from lux.constants import Constants
-from lux.game_constants import GAME_CONSTANTS
-from lux import annotate
 import random
+from typing import List, Optional
+
+from lux.gamesetup.game import GameMap
+from lux.player import Player
+from lux.constants import Constants
+from lux.gamesetup.game import Game
 
 DIRECTIONS = Constants.DIRECTIONS
 game_state = None
@@ -14,20 +14,42 @@ open(logfile, "w")
 
 
 class GameSystem:
-    def __init__(self):
-        self.actions = []
-        self.player = None
-        self.opponent = None
-        self.map = None
-        self.logfile = "agent.log"
-        self.step = 0
+    """
+    A class to control the game progression
 
-    def run(self):
-        self.player.activate_city_actions(self)
-        self.player.activate_unit_actions(self)
-        return self.actions
+    ...
 
-    def setup(self, observation):
+    Attributes
+    ----------
+    actions : List[str]
+        instructions to feed to the next round
+    player : Player
+        the current player
+    opponent : Player
+        the current opponent
+    map : GameMap
+        the map of the game
+    step : int
+        the turn of the game (0 - 360)
+
+    Methods
+    -------
+    setup(observation: Observation) -> None:
+        initiates the game state for the new turn
+    run() -> List[str]:
+        activates city and unit actions and returns a record of them
+    rotate_90_degrees(direction: DIRECTIONS) -> DIRECTIONS: @staticmethod
+        returns a random cardinal directions 90 degrees from the input direction
+    """
+
+    def __init__(self) -> None:
+        self.actions: List[str] = []
+        self.player: Optional[Player] = None
+        self.opponent: Optional[Player] = None
+        self.map: Optional[GameMap] = None
+        self.step: int = 0
+
+    def setup(self, observation) -> None:
         global game_state
         if observation["step"] == 0:
             game_state = Game()
@@ -41,11 +63,10 @@ class GameSystem:
         self.map = game_state.map
         self.step = observation["step"]
 
-    def rotate_90_degrees(self, direction):
-        dir_list = [DIRECTIONS.NORTH, DIRECTIONS.EAST, DIRECTIONS.SOUTH, DIRECTIONS.WEST]
-        if direction == DIRECTIONS.CENTER:
-            return random.choice(dir_list)
-        return dir_list[(dir_list.index(direction) + random.choice([1, -1])) % 4]
+    def run(self) -> List[str]:
+        self.player.activate_city_actions(self)
+        self.player.activate_unit_actions(self)
+        return self.actions
 
 
 def agent(observation, configuration):

@@ -1,10 +1,8 @@
 # Code associated w/: https://youtu.be/6_GXTbTL9Uc
-import math, sys
-from lux.game import Game
-from lux.game_map import Cell, RESOURCE_TYPES
-from lux.constants import Constants
-from lux.game_constants import GAME_CONSTANTS
-from lux import annotate
+import math
+from .lux.gamesetup.game import Game
+from .lux.cell import Cell
+from .lux.constants import Constants
 import numpy as np
 from collections import deque
 import random
