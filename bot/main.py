@@ -1,5 +1,5 @@
 from typing import Dict
-from agent import agent
+from ooagent import agent
 
 if __name__ == "__main__":
 

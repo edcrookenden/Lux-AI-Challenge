@@ -106,9 +106,9 @@ class Unit:
         system.map.add_future_no_go_positions(self.pos)
 
     def __try_to_build(self, system) -> None:
-        destination = system.map.get_optimal_position_to_expand(self.pos)
+        destination = system.map.get_optimal_position_to_expand(self.pos, system)
         if (destination is None) or system.map.city_is_too_far(destination, self.pos):
-            destination = system.map.get_optimal_position_to_build_new_city(self.pos)
+            destination = system.map.get_optimal_position_to_build_new_city(self.pos, system)
         self.try_to_build_at(destination, system)
 
     def try_to_build_at(self, pos, system) -> None:
@@ -121,7 +121,7 @@ class Unit:
             self.__safe_move(direction, system)
 
     def __move_towards_closest(self, get_closest_tile_function, system):
-        closest_tile = get_closest_tile_function(self.pos)
+        closest_tile = get_closest_tile_function(self.pos, system)
         direction = self.__direction_without_collision(closest_tile, system.map.is_collision_tile)
         self.__safe_move(direction, system)
 
