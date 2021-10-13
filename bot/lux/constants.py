@@ -37,4 +37,4 @@ class Constants:
 
     class GAME_PARAMETERS:
         NUMBER_OF_NIGHTS_BACKUP = 2
-        MAX_DISTANCES = {12: 3, 16: 5, 24: 7, 32: }
+        MAX_DISTANCES = {12: 3, 16: 5, 24: 7, 32: 8}
