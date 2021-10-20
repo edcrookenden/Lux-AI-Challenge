@@ -12,6 +12,7 @@ class Constants:
         NORTH = "n"
         WEST = "w"
         SOUTH = "s"
+
         EAST = "e"
         CENTER = "c"
         DIR_LIST = [NORTH, EAST, SOUTH, WEST]
@@ -37,4 +38,4 @@ class Constants:
 
     class GAME_PARAMETERS:
         NUMBER_OF_NIGHTS_BACKUP = 2
-        MAX_DISTANCES = {12: 3, 16: 5, 24: 7, 32: }
+        MAX_DISTANCES = {12: 3, 16: 5, 24: 7, 32: 8}
