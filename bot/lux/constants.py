@@ -12,6 +12,7 @@ class Constants:
         NORTH = "n"
         WEST = "w"
         SOUTH = "s"
+
         EAST = "e"
         CENTER = "c"
         DIR_LIST = [NORTH, EAST, SOUTH, WEST]
