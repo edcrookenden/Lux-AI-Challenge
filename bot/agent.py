@@ -10,6 +10,8 @@ game_state = None
 logfile = "agent.log"
 open(logfile, "w")
 
+print('test')
+
 def agent(observation, configuration):
     global game_state
 
